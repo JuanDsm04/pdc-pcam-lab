@@ -94,3 +94,38 @@ void print_summary(const char* exe, const char* mode, const Config& c, int threa
     std::printf("Max threads reported by OpenMP: %d\n", omp_get_max_threads());
 }
 // FIN BLOQUE COMUN
+
+int main(int argc, char** argv) {
+    Config cfg = parse_args(argc, argv);
+    cfg.threads = 1;
+    cfg.schedule = "none";
+    cfg.chunk = 0;
+
+    std::vector<Body> bodies = init_bodies(cfg.n);
+    std::vector<double> fx(cfg.n), fy(cfg.n);
+
+    double t0 = omp_get_wtime();
+    for (int s = 0; s < cfg.steps; s++) {
+        // Fase 1: fuerza total sobre cada cuerpo i (lee posiciones del inicio del paso)
+        for (int i = 0; i < cfg.n; i++) {
+            double sx = 0.0, sy = 0.0;
+            for (int j = 0; j < cfg.n; j++) {
+                if (i == j) continue;
+                double dx = bodies[j].x - bodies[i].x;
+                double dy = bodies[j].y - bodies[i].y;
+                double r2 = dx * dx + dy * dy + EPS2;
+                double f = G * bodies[i].mass * bodies[j].mass / (r2 * std::sqrt(r2));
+                sx += f * dx;
+                sy += f * dy;
+            }
+            fx[i] = sx;
+            fy[i] = sy;
+        }
+        // Fase 2: actualizar velocidades y posiciones
+        update_bodies(bodies, fx, fy);
+    }
+    double elapsed = omp_get_wtime() - t0;
+
+    print_summary(argv[0], "sequential", cfg, 1, elapsed, checksum(bodies));
+    return 0;
+}
