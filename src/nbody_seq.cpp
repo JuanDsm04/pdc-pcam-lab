@@ -11,7 +11,7 @@
 #include <vector>
 #include <omp.h>
 
-const char* STUDENT = "Nombre1 Apellido1, Nombre2 Apellido2, Nombre3 Apellido3";
+const char* STUDENT = "Juan Diego Solís, Victor Pérez, Luis Palacios";
 
 struct Body {
     double x, y;
